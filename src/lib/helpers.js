@@ -1,17 +1,33 @@
-import _ from 'lodash';
+import range from 'lodash/range';
+import chunk from 'lodash/chunk';
+import flatten from 'lodash/flatten';
 
-export const gutterPadding = 21;
+export const springSetting = { stiffness: 150, damping: 16 };
+
 export const clamp = (n, min, max) => Math.max(Math.min(n, max), min);
-export const getColumnWidth = (length) => (window.innerWidth / length) - (gutterPadding / length); // spread columns over available window width
 
 export const calculateVisiblePositions = (newOrder, width, height) => {
     return newOrder.map((column, col) => {
-       return _.range(column.length + 1).map((item, row) => {
+       return range(column.length + 1).map((item, row) => {
            return [width * col, height * row];
        });
    });
 }
 
-// define spring motion opts
-export const springSetting1 = {stiffness: 180, damping: 10};
-export const springSetting2 = {stiffness: 150, damping: 16};
+export const toColumns = (data, columns) => {
+    return chunk(data, Math.ceil(data.length / columns));
+};
+
+export const reinsert = (array, colFrom, rowFrom, colTo, rowTo, columns, fixed) => {
+    var _array = array.slice(0);
+    const val = _array[colFrom][rowFrom];
+    _array[colFrom].splice(rowFrom, 1);
+    _array[colTo].splice(rowTo, 0, val);
+
+    if (colTo !== colFrom && fixed) {
+        const data = flatten(_array);
+        _array = toColumns(data, columns);
+    }
+
+    return _array;
+};

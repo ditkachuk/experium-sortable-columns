@@ -10,7 +10,7 @@
   "peerDependencies": {
     "react": "^15.x.x",
     "react-dom": "^15.x.x",
-    "react-motion": "^0.5.0"
+    "react-motion": "^0.5.x"
   },
   "devDependencies": {
     "lodash": "^4.17.4",
