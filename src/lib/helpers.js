@@ -19,6 +19,7 @@ export const toColumns = (data, columns) => {
 };
 
 export const reinsert = (array, colFrom, rowFrom, colTo, rowTo, columns, fixed) => {
+    rowTo = Math.min(rowTo, array[colTo].length - 1);
     var _array = array.slice(0);
     const val = _array[colFrom][rowFrom];
     _array[colFrom].splice(rowFrom, 1);

@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 import { Motion, spring } from 'react-motion';
 import keys from 'lodash/keys';
 
@@ -11,13 +12,13 @@ import {
 } from './helpers';
 
 export default class Columns extends Component {
-    // static propTypes = {
-    //     initialList: [],
-    //     columns: 2,
-    //     fixed: false,
-    //     itemTemplate: () => {},
-    //     onChange: () => {}
-    // }
+    static propTypes = {
+        initialList: PropTypes.array.isRequired,
+        columns: PropTypes.number,
+        fixed: PropTypes.bool,
+        itemTemplate: PropTypes.func.isRequired,
+        onChange: PropTypes.func
+    }
 
     constructor(props) {
         super(props);
@@ -48,18 +49,18 @@ export default class Columns extends Component {
         );
     }
 
-    componentDidMount() {
+    addEventListeners() {
         window.addEventListener('touchmove', this.handleTouchMove);
         window.addEventListener('mousemove', this.handleMouseMove);
         window.addEventListener('touchend', this.handleMouseUp);
         window.addEventListener('mouseup', this.handleMouseUp);
     }
 
-    componentWillUnmount() {
-        window.removeEventListener('touchmove', this.handleResize);
-        window.removeEventListener('mousemove', this.handleResize);
-        window.removeEventListener('touchend', this.handleResize);
-        window.removeEventListener('mouseup', this.handleResize);
+    removeEventListeners() {
+        window.removeEventListener('touchmove', this.handleTouchMove);
+        window.removeEventListener('mousemove', this.handleMouseMove);
+        window.removeEventListener('touchend', this.handleMouseUp);
+        window.removeEventListener('mouseup', this.handleMouseUp);
     }
 
     handleTouchStart = (key, currentColumn, pressLocation, e) => {
@@ -82,8 +83,9 @@ export default class Columns extends Component {
             const rowTo = clamp(Math.floor((mouse[1] + (height / 2)) / height), 0, 100);
             const rowFrom = columns[colFrom].indexOf(lastPress);
 
-            if (columns[colTo]) {
-                console.log(colFrom, rowFrom, colTo, rowTo);
+            const couldReinsert = rowFrom !== -1 && columns[colTo];
+
+            if (couldReinsert) {
                 newColumns = reinsert(
                     columns,
                     colFrom, rowFrom, colTo, rowTo,
@@ -94,14 +96,17 @@ export default class Columns extends Component {
             this.layout = calculateVisiblePositions(newColumns, width, height);
 
             this.setState({
+                moved: true,
                 mouse,
                 columns: newColumns,
-                currentColumn: columns[colTo] ? colTo : colFrom
+                currentColumn: couldReinsert ? colTo : colFrom
             });
         }
     }
 
     handleMouseDown = (key, currentColumn, [pressX, pressY], {pageX, pageY}) => {
+        this.addEventListeners();
+
         this.setState({
             lastPress: key,
             currentColumn,
@@ -112,30 +117,36 @@ export default class Columns extends Component {
     }
 
     handleMouseUp = () => {
-        this.props.onChange(this.state.columns);
+        const { onChange } = this.props;
+        if (onChange) {
+            onChange(this.state.columns);
+        }
 
         this.setState({
+            moved: false,
             isPressed: false,
             delta: [0, 0]
         });
+
+        this.removeEventListeners();
     }
 
     render() {
-        const { columns, lastPress, currentColumn, isPressed, mouse, isResizing } = this.state;
+        const { columns, lastPress, currentColumn, isPressed, mouse, moved, isResizing } = this.state;
         const { width, height, itemTemplate } = this.props;
         const { data, layout } = this;
 
         const maxHeight = height * columns.reduce((max, { length }) => length > max ? length : max, 0);
 
         return (
-            <div className="items" ref={node => this.items = node} style={{ height: maxHeight }}>
+            <div className="react-columns-items" ref={node => this.items = node} style={{ height: maxHeight }}>
                 { columns.map( (column, colIndex) =>
                     column.map( (row) => {
                         let style,
                             x,
                             y,
                             visualPosition = columns[colIndex].indexOf(row),
-                            isActive = (row === lastPress && colIndex === currentColumn && isPressed);
+                            isActive = (row === lastPress && colIndex === currentColumn && isPressed && moved);
 
                         if (isActive) {
                             [x, y] = mouse;
@@ -163,7 +174,7 @@ export default class Columns extends Component {
                                     <div
                                         onMouseDown={this.handleMouseDown.bind(null, row, colIndex, [x, y])}
                                         onTouchStart={this.handleTouchStart.bind(null, row, colIndex, [x, y])}
-                                        className={isActive ? 'item is-active' : 'item'}
+                                        className={isActive ? 'react-columns-item react-columns-item-active' : 'react-columns-item'}
                                         style={{
                                             width,
                                             height,

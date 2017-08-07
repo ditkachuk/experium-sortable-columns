@@ -1,17 +1,12 @@
 import React, { Component } from 'react';
+import times from 'lodash/times';
 
 import './example.css';
 import '../lib/style.css';
 import Columns from '../lib/Columns.js';
 
-const data = [
-    { id: 1, name: 'item 1'},
-    { id: 2, name: 'item 2'},
-    { id: 3, name: 'item 3'},
-    { id: 4, name: 'item 4'},
-    { id: 5, name: 'item 5'},
-    { id: 6, name: 'item 6'},
-];
+var data = [];
+times(45, item => data.push({ id: item, name: 'Item ' + item}));
 
 export default class Example extends Component {
     state = {
@@ -19,8 +14,7 @@ export default class Example extends Component {
     }
 
     updateState = (newOrder) => {
-        console.log(newOrder);
-        //this.setState({ data: newOrder });
+        this.setState({ data: newOrder });
     }
 
     render() {
@@ -32,13 +26,17 @@ export default class Example extends Component {
                     initialList={data}
                     columns={2}
                     fixed={true}
-                    width={150}
+                    width={230}
                     height={30}
                     itemTemplate={(item, index) => (
-                        <span>
-                            <input type="checkbox" defaultChecked={item.id === 1} value={item.id} />
+                        <div className="item">
+                            <input
+                                type="checkbox"
+                                defaultChecked={item.id === 1}
+                                value={item.id}
+                            />
                             {item.name} {index}
-                        </span>
+                        </div>
                     )}
                     onChange={this.updateState}
                 />
